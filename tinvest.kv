@@ -1,0 +1,108 @@
+# Диалог ввод токена
+<EnterToken>
+    size_hint_y: None
+    MDTextField:
+        id: token_text
+        max_text_length: 88
+        hint_text: "Multi-line text"
+        hint_text: "Введите токен"
+    MDFlatButton        
+        text: "OK"
+        on_press: app.token_entry(token_text.text), app.on_start() 
+        
+        
+# Карточка инструмента
+<CardTools>
+    md_bg_color: '#2F4F4F'
+    size_hint_y: None
+    height: 40
+    MDLabel:
+        text: root.text
+    
+        
+    
+# Корень      
+MDScreen:
+    MDBottomNavigation:
+        panel_color: "#2F4F4F"
+        selected_color_background: "orange"
+        text_color_active: "green"
+        
+        # Экран портфеля
+        MDBottomNavigationItem:            
+            name: 'home'
+            text: 'Портфель'
+            icon: 'toolbox'
+            MDBoxLayout:
+                md_bg_color: '#008000'
+                adaptive_height: False                
+                orientation: 'vertical'
+                padding: [5, 5, 5, 5]
+                
+                # Карта портфеля настройки
+                MDCard:                    
+                    size_hint: 1, .3
+                    md_bg_color: '#2F4F4F'
+                    MDBoxLayout:
+                        adaptive_height: False
+                        orientation: 'vertical'
+                        MDLabel:
+                            size_hint: 1, .2
+                            font_style: 'H5'                            
+                            text: "ПОРТФЕЛЬ"
+                        MDSeparator:                            
+                            height: '1dp'
+                        MDGridLayout:
+                            size_hint: 1, .7
+                            adaptive_height: False
+                            cols: 2
+                            rows: 2                                                                                                             
+                            MDLabel:
+                                text: 'Наименование тарифа'
+                            MDLabel:
+                                id: name_tariff
+                                text: '-'                            
+                            MDLabel:
+                                text: 'Стоимость портфеля'
+                            MDLabel:
+                                id: value_portfolio
+                                text: '-'                                                                                                
+                    MDIconButton:                            
+                        icon: "account"
+                        pos_hint: {"top": 1, "right": 1}
+                        on_release: app.show_confirmation_dialog ()
+                        
+                # Экран портфеля акции                
+                MDScrollView:                                        
+                    do_scroll_x: False
+                    do_scroll_y: True
+                    GridLayout:
+                        cols: 1
+                        size_hint_y: None
+                        height: self.minimum_height
+                        id: inNali_box                                                                    
+                        spacing: 5
+                        padding: [0, 5, 0, 0]
+                        
+                        
+                    
+                
+        # Экран брендов    
+        MDBottomNavigationItem:
+            name: 'brands'
+            text: 'Бренды'
+            icon: 'finance'            
+            MDLabel:
+                text: 'Бренды'
+                halign: 'center'
+                
+        # Экран избраного
+        MDBottomNavigationItem:
+            name: 'favourites'
+            text: 'Избранное'
+            icon: 'star-box'
+            MDLabel:
+                text: 'Избранное'
+                halign: 'center'
+
+        
