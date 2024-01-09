@@ -1,46 +1,77 @@
-# Диалог ввод токена
-<EnterToken>
-    size_hint_y: None
-    MDTextField:
-        id: token_text
-        max_text_length: 88
-        hint_text: "Multi-line text"
-        hint_text: "Введите токен"
-    MDFlatButton        
-        text: "OK"
-        on_press: app.token_entry(token_text.text), app.on_start() 
-        
-        
-# Карточка инструмента
-<CardTools>
-    md_bg_color: '#2F4F4F'
-    size_hint_y: None
-    height: 40
+# Сетка графика
+<GridGraph>
+    name: 'graf'
+    id: graf
+    x1: root.x1
+    x2: root.x2
+    y1: root.y1
+    y2: root.y2
+    canvas:
+        Color:
+            rgba: 37/255, 38/255, 33/255, 0.3
+        Line:
+            width: 0.5
+            points: [graf.x1, graf.y1, graf.x2, graf.y2]
+
+# Свеча графика
+<CandleGraph>
+    name: 'candle_graph'
+    id: candle_graph
+    x1: root.x1
+    x2: root.x2
+    x3: root.x3
+    x4: root.x4
+    y1: root.y1
+    y2: root.y2
+    y3: root.y3
+    y4: root.y4
+    canvas:
+        Color:
+            rgba: 37/255, 38/255, 33/255, 1
+        Line:
+            width: 2
+            points: [candle_graph.x1, candle_graph.y1, candle_graph.x2, candle_graph.y2]
+        Color:
+            rgba: 37/255, 38/255, 33/255, 1
+        Rectangle:
+            pos: [candle_graph.x3, candle_graph.y3]
+            size: [candle_graph.x4, candle_graph.y4]
+
+# Карточки названий акций на экране избранного
+<MyMDCard@MDCard>
+    size_hint: 1, .2
     MDLabel:
-        text: root.text
-    
-        
-    
-# Корень      
-MDScreen:
+        text: 'Здесь будет название акции'
+        size_hint: 0.8, 1
+        halign: 'center'
+    MDIconButton:
+        icon: "delete-circle-outline"
+        size_hint: 0.2, 1
+        halign: 'center'
+        on_press: app.clear_graf(), app.graf_candle()
+        on_release: app.graf_line()
+
+
+# главный экран приложения
+<MainWindow>:
     MDBottomNavigation:
         panel_color: "#2F4F4F"
         selected_color_background: "orange"
         text_color_active: "green"
-        
+
         # Экран портфеля
-        MDBottomNavigationItem:            
+        MDBottomNavigationItem:
             name: 'home'
             text: 'Портфель'
             icon: 'toolbox'
             MDBoxLayout:
                 md_bg_color: '#008000'
-                adaptive_height: False                
+                adaptive_height: False
                 orientation: 'vertical'
                 padding: [5, 5, 5, 5]
-                
+
                 # Карта портфеля настройки
-                MDCard:                    
+                MDCard:
                     size_hint: 1, .3
                     md_bg_color: '#2F4F4F'
                     MDBoxLayout:
@@ -48,61 +79,245 @@ MDScreen:
                         orientation: 'vertical'
                         MDLabel:
                             size_hint: 1, .2
-                            font_style: 'H5'                            
+                            font_style: 'H5'
                             text: "ПОРТФЕЛЬ"
-                        MDSeparator:                            
+                        MDSeparator:
                             height: '1dp'
                         MDGridLayout:
                             size_hint: 1, .7
                             adaptive_height: False
                             cols: 2
-                            rows: 2                                                                                                             
+                            rows: 2
                             MDLabel:
                                 text: 'Наименование тарифа'
                             MDLabel:
                                 id: name_tariff
-                                text: '-'                            
+                                text: '-'
                             MDLabel:
                                 text: 'Стоимость портфеля'
                             MDLabel:
                                 id: value_portfolio
-                                text: '-'                                                                                                
-                    MDIconButton:                            
+                                text: '-'
+                    MDIconButton:
                         icon: "account"
                         pos_hint: {"top": 1, "right": 1}
                         on_release: app.show_confirmation_dialog ()
-                        
-                # Экран портфеля акции                
-                MDScrollView:                                        
+
+                # Экран портфеля акции
+                MDScrollView:
                     do_scroll_x: False
                     do_scroll_y: True
                     GridLayout:
                         cols: 1
                         size_hint_y: None
                         height: self.minimum_height
-                        id: inNali_box                                                                    
+                        id: inNali_box
                         spacing: 5
                         padding: [0, 5, 0, 0]
-                        
-                        
-                    
-                
-        # Экран брендов    
+
+
+
+
+        # Экран брендов
         MDBottomNavigationItem:
             name: 'brands'
-            text: 'Бренды'
-            icon: 'finance'            
-            MDLabel:
-                text: 'Бренды'
-                halign: 'center'
-                
+            text: 'АКЦИИ'
+            icon: 'finance'
+            MDBoxLayout:
+                md_bg_color: '#008000'
+                adaptive_height: False
+                orientation: 'vertical'
+                padding: [5, 5, 5, 5]
+
+                MDCard:
+                    size_hint: 1, .2
+                    md_bg_color: '#2F4F4F'
+                    MDBoxLayout:
+                        adaptive_height: False
+                        orientation: 'vertical'
+                        MDLabel:
+                            size_hint: 1, .2
+                            font_style: 'H5'
+                            text: "Акции доступные к купле-продаже"
+                            halign: 'center'
+                        MDSeparator:
+                            height: '1dp'
+                        MDBoxLayout:
+                            adaptive_height: True
+                            orientation: 'horizontal'
+                            MDLabel:
+                                text: 'Название'
+                                halign: 'center'
+                            MDLabel:
+                                text: 'Цена'
+                                halign: 'center'
+                            MDLabel:
+                                text: 'Лот'
+                                halign: 'center'
+                            MDLabel:
+                                text: 'Котирровка'
+                                halign: 'center'
+                            MDIconButton:
+                                halign: 'center'
+                                on_release:
+                                    app.root.current = 'screen_info_tools'
+                                    root.manager.transition.direction = 'left'
+
+
+                MDScrollView:
+                    do_scroll_x: False
+                    do_scroll_y: True
+                    GridLayout:
+                        cols: 1
+                        size_hint_y: None
+                        height: self.minimum_height
+                        id: shares_box
+                        spacing: 5
+                        padding: [0, 5, 0, 0]
+
+
         # Экран избраного
         MDBottomNavigationItem:
             name: 'favourites'
             text: 'Избранное'
             icon: 'star-box'
-            MDLabel:
-                text: 'Избранное'
-                halign: 'center'
+            MDBoxLayout:
+                md_bg_color: '#008000'
+                adaptive_height: False
+                orientation: 'vertical'
+                padding: [5, 5, 5, 5]
+                spacing: 5
+                MDCard:
+                    size_hint: 1, .5
+                    md_bg_color: '#2F4F4F'
+                    MDBoxLayout:
+                        adaptive_height: False
+                        orientation: 'vertical'
+                        padding: [2, 2, 2, 2]
+                        spacing: 2
+                        MyMDCard:
+                            md_bg_color: '#f30f22'
+                        MyMDCard:
+                            md_bg_color: '#0544f3'
+                        MyMDCard:
+                            md_bg_color: '#e9f322'
+                        MyMDCard:
+                            md_bg_color: '#24f33d'
+                        MyMDCard:
+                            md_bg_color: '#a38112'
 
-        
+                MDCard:
+                    name: 'graf_fav'
+                    id: plot
+                    size_hint: 1, .8
+                    md_bg_color: '#2F4F4F'
+
+
+
+# второй экран приложения
+<Screen_Info_Tools>:
+    MDBoxLayout:
+        adaptive_height: False
+        orientation: 'vertical'
+        md_bg_color: '#008000'
+        padding: [5, 5, 5, 5]
+        spacing: 5
+        MDCard:
+            size_hint: 1, .1
+            md_bg_color: '#2F4F4F'
+            MDLabel:
+                text: 'Название акции'
+                halign: "center"
+        MDCard:
+            size_hint: 1, .2
+            md_bg_color: '#2F4F4F'
+            MDLabel:
+                text: 'Сектор:' + '\n' + 'Здесь будет название сектора'
+                halign: "left"
+        MDCard:
+            size_hint: 1, .3
+            md_bg_color: '#2F4F4F'
+            MDLabel:
+                text: 'Описание:' + '\n' + 'Здесь будет описание бренда'
+                halign: "left"
+        MDCard:
+            size_hint: 1, .1
+            md_bg_color: '#2F4F4F'
+            MDBoxLayout:
+                adaptive_height: True
+                orientation: 'horizontal'
+                MDIconButton:
+                    icon: "arrow-left-circle"
+                    size_hint: .3, .5
+                    on_release:
+                        app.root.current = 'main'
+                        root.manager.transition.direction = 'right'
+                MDIconButton:
+                    icon: "cash-multiple"
+                    size_hint: .3, .5
+                    on_press: app.graf_line()
+                MDIconButton:
+                    icon: "plus-box"
+                    size_hint: .3, .5
+                    on_press: app.clear_graf()
+        MDCard:
+            name: 'graf_sh'
+            id: plot
+            md_bg_color: '#2F4F4F'
+            size_hint: 1, .9
+
+# Экран входа и ввода токена
+<Authorization_Screen>:
+    MDBoxLayout:
+        adaptive_height: False
+        orientation: 'vertical'
+        md_bg_color: '#008000'
+        padding: [5, 5, 5, 5]
+        spacing: 5
+        MDCard:
+            size_hint: 1, .1
+            md_bg_color: '#2F4F4F'
+            MDLabel:
+                text: 'Добро пожаловать в TINVEST'
+                halign: "center"
+        MDCard:
+            size_hint: 1, .2
+            md_bg_color: '#2F4F4F'
+            MDIconButton:
+                icon: "eraser"
+            MDTextField:
+                multiline: True
+                hint_text: 'Введите токкен'
+                max_text_length: 100
+                pos_hint: {'top': 0.9}
+            MDIconButton:
+                id: approve
+                icon: "check-outline"
+                on_press: go_next.disabled=False
+        MDCard:
+            size_hint: 1, .8
+            md_bg_color: '#2F4F4F'
+            MDLabel:
+                text: 'Здесь будет информация аккаунта'
+                halign: "center"
+        MDCard:
+            size_hint: 1, .1
+            md_bg_color: '#2F4F4F'
+            MDAnchorLayout:
+                MDTextButton:
+                    id: go_next
+                    text: 'Продолжить'
+                    disabled:  True
+                    on_release:
+                        app.root.current = 'main'
+                        root.manager.transition.direction = 'left'
+
+
+
+
+
+
+
+
+
+
