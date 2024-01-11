@@ -1,7 +1,12 @@
 import re
-import numpy as np
+import datetime
 
-from sklearn.preprocessing import MinMaxScaler
+import matplotlib.pyplot as plt
+from mpl_finance import candlestick_ohlc
+import pandas as pd
+import matplotlib.dates as mpl_dates
+import numpy as np
+from kivy.garden.matplotlib import FigureCanvasKivyAgg
 
 from kivymd.app import MDApp
 from kivy.lang import Builder
@@ -10,7 +15,6 @@ from kivy.uix.screenmanager import (ScreenManager, Screen,
 from kivymd.uix.card import MDCard
 from kivymd.uix.label import MDLabel
 from kivy.uix.widget import Widget
-from kivy.graphics import *
 from kivy.properties import (StringProperty, NumericProperty,
                              ListProperty, ObjectProperty, BooleanProperty,
                              BoundedNumericProperty, OptionProperty,
@@ -118,24 +122,59 @@ class TinvestApp(MDApp):
         self.root.get_screen(name_scr).ids.plot.clear_widgets(
             children=None)
 
-    # Свеча графика
-    def graf_candle(self):
+    # Линейный график
+    def line_graph(self):
         name_scr = re.split("'|'", (str(self.root.children)))[1]
         plot = self.root.get_screen(name_scr).ids.plot
+        fig, ax = plt.subplots()
+        # Прозрачность фигуры
+        fig.patch.set_alpha(0)
+        ax.plot([1, 2, 3, 4])
+        # Прозрачность фона графика
+        ax.patch.set_alpha(0)
+        canvas = FigureCanvasKivyAgg(fig)
+        plot.add_widget(canvas)
 
-        scaler = MinMaxScaler()
-        data = [[0, plot.size[1]], [63, 64], [65, 66], [69, 68]]
-        scaler.fit(data)
-        y = scaler.transform(data)
-        y1 = int(((y[1])[0]) * plot.size[1])
-        y2 = int(((y[1])[1]) * plot.size[1]) + 5
-        print(y1, y2)
+    # График японских свеч
+    def japan_candle(self):
+        name_scr = re.split("'|'", (str(self.root.children)))[1]
+        plot = self.root.get_screen(name_scr).ids.plot
+        stock_prices = pd.DataFrame(
+            {'date': np.array([datetime.datetime(
+                2021, 11, i + 1)
+                for i in range(14)]),
+                'open': [36, 56, 45, 29, 65, 66, 67, 36, 56, 45, 29, 65, 66, 67],
+                'close': [29, 72, 11, 4, 23, 68, 45, 29, 72, 11, 4, 23, 68, 45],
+                'high': [42, 73, 61, 62, 73, 56, 55, 42, 73, 61, 62, 73, 56, 55],
+                'low': [22, 11, 10, 2, 13, 24, 25, 22, 11, 10, 2, 13, 24, 25]
+            }
+        )
 
-        plot.add_widget(CandleGraph((plot.size[0] / 9), y1,
-                                    (plot.size[0] / 9), y2, y1, 43, y2, 45))
+        ohlc = stock_prices.loc[:, ['date', 'open', 'high', 'low', 'close']]
+        ohlc['date'] = pd.to_datetime(ohlc['date'])
+        ohlc['date'] = ohlc['date'].apply(mpl_dates.date2num)
+        ohlc = ohlc.astype(float)
 
-        # print(y1, y2)
-        #
+        fig, ax = plt.subplots()
+        fig.patch.set_alpha(0)
+        #Сетка графика
+        plt.grid(color='b', linestyle='-', linewidth=0.3)
+
+        candlestick_ohlc(ax, ohlc.values, width=0.4, colorup='green',
+                         colordown='red', alpha=1)
+
+        ax.set_xlabel('Дата')
+        ax.set_ylabel('Цена')
+        fig.suptitle('Динамика')
+
+        date_format = mpl_dates.DateFormatter('%d-%m-%Y')
+        ax.xaxis.set_major_formatter(date_format)
+        ax.patch.set_alpha(0)
+        fig.autofmt_xdate()
+
+        canvas = FigureCanvasKivyAgg(fig)
+        plot.add_widget(canvas)
+
 
 
 TinvestApp().run()

@@ -48,8 +48,8 @@
         icon: "delete-circle-outline"
         size_hint: 0.2, 1
         halign: 'center'
-        on_press: app.clear_graf(), app.graf_candle()
-        on_release: app.graf_line()
+        on_press: app.clear_graf(), app.line_graph()
+
 
 
 # главный экран приложения
@@ -255,11 +255,11 @@
                 MDIconButton:
                     icon: "cash-multiple"
                     size_hint: .3, .5
-                    on_press: app.graf_line()
+                    on_press: app.clear_graf(), app.japan_candle()
                 MDIconButton:
                     icon: "plus-box"
                     size_hint: .3, .5
-                    on_press: app.clear_graf()
+                    on_press:
         MDCard:
             name: 'graf_sh'
             id: plot
