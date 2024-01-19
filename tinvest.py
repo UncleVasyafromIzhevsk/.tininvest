@@ -25,6 +25,14 @@ from kivy.properties import (StringProperty, NumericProperty,
                              ColorProperty
                              )
 
+from tinapi import Tin_API
+
+# Получение токена из файла
+token = None
+with open('token.txt', 'r') as f:
+    token = f.read()
+#Объект тинкофф
+tin = Tin_API(token)
 
 # главный экран
 class MainWindow(Screen):
@@ -93,6 +101,38 @@ class TinvestApp(MDApp):
         sm.add_widget(Screen_Info_Tools(name='screen_info_tools'))
         return sm
 
+    # Авторизация на начальной странице
+    def token_auth(self, token):
+        _token = token
+        # with open('token.txt', 'w') as f:
+        #     f.write(_token)
+        print(token)
+        tininfo = tin.tin_tariff()
+        tinschet = tin.tin_schet()
+        tinavail = tin.tin_portf(tinschet.accounts[0].id)
+        #Определяем ссылку на screen
+        name_scr = (re.split("'|'", (str(self.root.children)))[1])
+        #Определяем объек screen
+        a = self.root.get_screen(name_scr).ids
+        print (a.tinuserinfo)
+        #Применяем команды к виджетам по id
+        a.tinuserinfo.text = """
+        Наименование тарифа пользователя: {}\n
+        Идентификатор счёта: {}\n
+        Общая стоимость портфеля: {},{} Рублей\n
+        Текущая относительная доходность портфеля: {},{} %\n
+        Общая стоимость валют в портфеле: {},{} Рублей\n
+        Общая стоимость акций в портфеле: {},{} Рублей 
+        """.format(tininfo.tariff, tinschet.accounts[0].id,
+                   str(tinavail.total_amount_portfolio.units),
+                   str(tinavail.total_amount_portfolio.nano),
+                   str(tinavail.expected_yield.units),
+                   str(tinavail.expected_yield.nano),
+                   str(tinavail.total_amount_currencies.units),
+                   str(tinavail.total_amount_currencies.nano),
+                   str(tinavail.total_amount_shares.units),
+                   str(tinavail.total_amount_shares.nano))
+
     # Сетка графика эк. инструмента
     def graf_line(self):
         # print(type(self.root.children))
@@ -157,7 +197,7 @@ class TinvestApp(MDApp):
 
         fig, ax = plt.subplots()
         fig.patch.set_alpha(0)
-        #Сетка графика
+        # Сетка графика
         plt.grid(color='b', linestyle='-', linewidth=0.3)
 
         candlestick_ohlc(ax, ohlc.values, width=0.4, colorup='green',
@@ -174,7 +214,6 @@ class TinvestApp(MDApp):
 
         canvas = FigureCanvasKivyAgg(fig)
         plot.add_widget(canvas)
-
 
 
 TinvestApp().run()

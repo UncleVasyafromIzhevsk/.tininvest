@@ -286,6 +286,7 @@
             MDIconButton:
                 icon: "eraser"
             MDTextField:
+                id: token_text
                 multiline: True
                 hint_text: 'Введите токкен'
                 max_text_length: 100
@@ -293,11 +294,12 @@
             MDIconButton:
                 id: approve
                 icon: "check-outline"
-                on_press: go_next.disabled=False
+                on_press: go_next.disabled=False, app.token_auth(token_text.text)
         MDCard:
             size_hint: 1, .8
             md_bg_color: '#2F4F4F'
             MDLabel:
+                id: tinuserinfo
                 text: 'Здесь будет информация аккаунта'
                 halign: "center"
         MDCard:
