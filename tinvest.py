@@ -25,6 +25,8 @@ from kivy.properties import (StringProperty, NumericProperty,
                              ColorProperty
                              )
 
+from tinkoff.invest import RequestError
+
 from tinapi import Tin_API
 
 # Получение токена из файла
@@ -101,20 +103,27 @@ class TinvestApp(MDApp):
         sm.add_widget(Screen_Info_Tools(name='screen_info_tools'))
         return sm
 
+    #Определение screen и работа с id kv
+    def screen_def(self):
+        # Определяем ссылку на screen
+        name_scr = (re.split("'|'", (str(self.root.children)))[1])
+        # Определяем объек screen
+        a = self.root.get_screen(name_scr).ids
+        return a
+
+    #Очистка текстового виджита
+    def clean_text_widg(self, r):
+        a = self.screen_def()
+        a.r.hint_text = 'ujjj'
+
     # Авторизация на начальной странице
-    def token_auth(self, token):
-        _token = token
-        # with open('token.txt', 'w') as f:
-        #     f.write(_token)
+    def token_auth(self):
         print(token)
         tininfo = tin.tin_tariff()
         tinschet = tin.tin_schet()
         tinavail = tin.tin_portf(tinschet.accounts[0].id)
-        #Определяем ссылку на screen
-        name_scr = (re.split("'|'", (str(self.root.children)))[1])
-        #Определяем объек screen
-        a = self.root.get_screen(name_scr).ids
-        print (a.tinuserinfo)
+        a = self.screen_def()
+        print(a.tinuserinfo)
         #Применяем команды к виджетам по id
         a.tinuserinfo.text = """
         Наименование тарифа пользователя: {}\n
@@ -133,16 +142,52 @@ class TinvestApp(MDApp):
                    str(tinavail.total_amount_shares.units),
                    str(tinavail.total_amount_shares.nano))
 
+    # Функция при запуске приложения
+    def on_start(self):
+        global token
+        a = self.screen_def()
+        print(a)
+        if token == '':
+            a.tinuserinfo.text = 'Введите токен'
+        if token != '':
+            try:
+                self.token_auth()
+                a.go_next.disabled = False
+            except RequestError:
+                a.tinuserinfo.text = 'Токен доступа не найден или не активен'
+
+    #Ввод токена
+    def token_input(self, *args):
+        a = self.screen_def()
+        with open('token.txt', 'w') as f:
+            f.write(args[0])
+        tin.token = args[0]
+        try:
+            self.token_auth()
+            a.go_next.disabled = False
+        except RequestError:
+            a.tinuserinfo.text = 'Токен доступа не найден или не активен'
+            a.go_next.disabled = True
+
+    #Страница портфеля
+    #Обновление данных портфеля
+    def portfolio_data(self):
+        tinschet = tin.tin_schet()
+        tinavail = tin.tin_portf(tinschet.accounts[0].id)
+        a = self.screen_def()
+        a.tot_portf_val.text = """
+        {},{} Рублей
+        """.format(str(tinavail.total_amount_portfolio.units),
+                   str(tinavail.total_amount_portfolio.nano))
+        a.tot_val_curr_portf.text = """
+        {},{} Рублей
+        """.format(str(tinavail.total_amount_currencies.units),
+                   str(tinavail.total_amount_currencies.nano))
+
     # Сетка графика эк. инструмента
     def graf_line(self):
-        # print(type(self.root.children))
         name_scr = re.split("'|'", (str(self.root.children)))[1]
-        # print(re.split("'|'", (str(self.root.children)))[1])
-        # print(self.root.get_screen(re.split("'|'", (str(self.root.children))
-        # )[1]).ids)
         plot = self.root.get_screen(name_scr).ids.plot
-        # print(plot.pos)
-        # print(plot.size)
         a = (plot.size[0] / 9)
         b = (plot.size[1] / 9)
         c = 1

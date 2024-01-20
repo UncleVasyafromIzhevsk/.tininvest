@@ -80,6 +80,7 @@
                         MDLabel:
                             size_hint: 1, .2
                             font_style: 'H5'
+                            halign: 'center'
                             text: "ПОРТФЕЛЬ"
                         MDSeparator:
                             height: '1dp'
@@ -89,19 +90,15 @@
                             cols: 2
                             rows: 2
                             MDLabel:
-                                text: 'Наименование тарифа'
+                                text: 'Общая стоимость портфеля'
                             MDLabel:
-                                id: name_tariff
+                                id: tot_portf_val
                                 text: '-'
                             MDLabel:
-                                text: 'Стоимость портфеля'
+                                text: 'Общая стоимость валют в портфеле'
                             MDLabel:
-                                id: value_portfolio
+                                id: tot_val_curr_portf
                                 text: '-'
-                    MDIconButton:
-                        icon: "account"
-                        pos_hint: {"top": 1, "right": 1}
-                        on_release: app.show_confirmation_dialog ()
 
                 # Экран портфеля акции
                 MDScrollView:
@@ -283,18 +280,21 @@
         MDCard:
             size_hint: 1, .2
             md_bg_color: '#2F4F4F'
-            MDIconButton:
-                icon: "eraser"
-            MDTextField:
-                id: token_text
-                multiline: True
-                hint_text: 'Введите токкен'
-                max_text_length: 100
-                pos_hint: {'top': 0.9}
-            MDIconButton:
-                id: approve
-                icon: "check-outline"
-                on_press: go_next.disabled=False, app.token_auth(token_text.text)
+            MDBoxLayout:
+                orientation: 'horizontal'
+                MDTextField:
+                    id: token_text
+                    multiline: True
+                    hint_text: 'Введите токкен'
+                    max_text_length: 88
+                    pos_hint: {'top': 0.9}
+                    hint_text_color_focus: "green"
+                    line_color_focus: "green"
+                MDIconButton:
+                    id: approve
+                    icon: "check-outline"
+                    pos_hint: {'top': 0.7}
+                    on_press: app.token_input(token_text.text)
         MDCard:
             size_hint: 1, .8
             md_bg_color: '#2F4F4F'
@@ -313,6 +313,7 @@
                     on_release:
                         app.root.current = 'main'
                         root.manager.transition.direction = 'left'
+                        app.portfolio_data()
 
 
 
