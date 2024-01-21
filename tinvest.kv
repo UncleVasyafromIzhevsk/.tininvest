@@ -50,6 +50,54 @@
         halign: 'center'
         on_press: app.clear_graf(), app.line_graph()
 
+# Карточка инструмента
+<CardTools>
+    name: 'cartaInstrument'
+    id: carta_instrument
+    uid: root.uid
+    figi: root.figi
+    ticker: root.ticker
+    class_code: root.class_code
+    isin: root.isin
+    lot: root.lot
+    currency: root.currency
+    name_sh: root.name_sh
+    exchange: root.exchange
+    country_of_risk_name: root.country_of_risk_name
+    sector: root.sector
+    buy_available_flag: root.buy_available_flag
+    sell_available_flag: root.sell_available_flag
+    api_trade_available_flag: root.api_trade_available_flag
+    for_qual_investor_flag: root.for_qual_investor_flag
+    real_exchange: root.real_exchange
+    price: root.price
+    percent: root.percent
+    percent_color: root.percent_color
+
+
+    md_bg_color: '#2F4F4F'
+    size_hint_y: None
+    height: 80
+    MDBoxLayout:
+        adaptive_height: True
+        orientation: 'horizontal'
+        MDLabel:
+            text: carta_instrument.name_sh
+            halign: 'center'
+        MDLabel:
+            text: carta_instrument.price
+            halign: 'center'
+        MDLabel:
+            text: carta_instrument.lot_str
+            halign: 'center'
+        MDLabel:
+            text: carta_instrument.percent
+            color: carta_instrument.percent_color
+            halign: 'center'
+        MDIconButton:
+            icon: 'information'
+            halign: 'center'
+
 
 
 # главный экран приложения
@@ -314,6 +362,7 @@
                         app.root.current = 'main'
                         root.manager.transition.direction = 'left'
                         app.portfolio_data()
+                        app.go_main()
 
 
 

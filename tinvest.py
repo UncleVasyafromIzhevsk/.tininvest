@@ -1,5 +1,7 @@
 import re
 import datetime
+import asyncio
+import time
 
 import matplotlib.pyplot as plt
 from mpl_finance import candlestick_ohlc
@@ -33,8 +35,11 @@ from tinapi import Tin_API
 token = None
 with open('token.txt', 'r') as f:
     token = f.read()
+print(token)
 #Объект тинкофф
 tin = Tin_API(token)
+#Флаг перехода в основной апп
+go_mainapp = False
 
 # главный экран
 class MainWindow(Screen):
@@ -51,6 +56,54 @@ class Authorization_Screen(Screen):
     pass
 
 
+# Карты инструментов на экране портфеля
+class CardTools(MDCard):
+    name = ObjectProperty(None)
+    uid = StringProperty()
+    figi = StringProperty()
+    ticker = StringProperty()
+    class_code = StringProperty()
+    isin = StringProperty()
+    lot = NumericProperty()
+    currency = StringProperty()
+    name_sh = StringProperty()
+    exchange = StringProperty()
+    country_of_risk_name = StringProperty()
+    sector = StringProperty()
+    buy_available_flag = BooleanProperty()
+    sell_available_flag = BooleanProperty()
+    api_trade_available_flag = BooleanProperty()
+    for_qual_investor_flag = BooleanProperty()
+    real_exchange = StringProperty()
+    lot_str = StringProperty()
+    price = StringProperty()
+    percent = StringProperty()
+    percent_color = ColorProperty()
+    def __init__(self, *arg):
+        # Родительский конструктор
+        MDCard.__init__(self)
+        # Свой конструктор
+        self.uid = arg[0]
+        self.figi = arg[1]
+        self.ticker = arg[2]
+        self.class_code = arg[3]
+        self.isin = arg[4]
+        self.lot = arg[5]
+        self.currency = arg[6]
+        self.name_sh = arg[7]
+        self.exchange = arg[8]
+        self.country_of_risk_name = arg[9]
+        self.sector = arg[10]
+        self.buy_available_flag = arg[11]
+        self.sell_available_flag = arg[12]
+        self.api_trade_available_flag = arg[13]
+        self.for_qual_investor_flag = arg[14]
+        self.real_exchange = arg[15]
+        self.lot_str = str(self.lot)
+        self.price = ''
+        self.percent = ''
+        self.percent_color = 'black'
+
 # Линия графика
 class GridGraph(Widget):
     name = ObjectProperty(None)
@@ -58,7 +111,6 @@ class GridGraph(Widget):
     x2 = NumericProperty()
     y1 = NumericProperty()
     y2 = NumericProperty()
-
     def __init__(self, *arg):
         # Родительский конструктор
         Widget.__init__(self)
@@ -80,7 +132,6 @@ class CandleGraph(Widget):
     y2 = NumericProperty()
     y3 = NumericProperty()
     y4 = NumericProperty()
-
     def __init__(self, *arg):
         # Родительский конструктор
         Widget.__init__(self)
@@ -96,6 +147,14 @@ class CandleGraph(Widget):
 
 
 class TinvestApp(MDApp):
+    #Объявление объулта карты инструмента
+    card_Tools = {}
+    # Определение асинх задач
+    # Задача для получения, записи и отображения всех акций
+    get_all_shares_task = None
+    # Задача для получения, записи цен всех акций
+    get_all_prices_share_task = None
+    # other_task3 = None
     def build(self):
         sm = ScreenManager(transition=CardTransition())
         sm.add_widget(Authorization_Screen(name='login'))
@@ -115,6 +174,127 @@ class TinvestApp(MDApp):
     def clean_text_widg(self, r):
         a = self.screen_def()
         a.r.hint_text = 'ujjj'
+    #Включение флага перехода на основной апп
+    def go_main(self):
+        global go_mainapp
+        go_mainapp = True
+        print(go_mainapp)
+
+    # Функция для асинх задач
+    def walking_nearby(self):
+        # Задачам передаем фукции
+        # Получение, запись и отображение всех акций
+        self.get_all_shares_task = asyncio.ensure_future(
+            self.get_all_shares())
+        # Получение, запись цен всех акций
+        self.get_all_prices_share_task = asyncio.ensure_future(
+            self.async_price())
+        # self.other_task3 = asyncio.ensure_future(self.async_func2())
+        async def run_wrapper():
+            await self.async_run(async_lib='asyncio')
+            print('App done')
+            self.get_all_shares_task()
+            self.get_all_prices_share_task.cancel()
+            #self.other_task3.cancel()
+        return asyncio.gather(run_wrapper(), self.get_all_shares_task,
+                              self.get_all_prices_share_task)
+        # self.other_task3)#
+
+    # Асинхроные корутины
+    # Корутина по всем акциям
+    async def get_all_shares(self):
+        global go_mainapp
+        print(go_mainapp)
+        #Ждем пока не сработал флаг перехода на основной экран
+        while not go_mainapp:
+            await asyncio.sleep(2)
+            print(go_mainapp)
+        #Перешли на основной экран
+        a_id = self.screen_def()
+        print(a_id.shares_box)
+        b = await tin.tin_req_all_shares()
+        #print(b)
+        i = 1
+        for a in b.instruments[:-1]:
+            print(a.name)
+            if (
+                    a.api_trade_available_flag == 1
+                    and a.for_qual_investor_flag == 0
+                    and a.currency == 'rub'):
+                get_price = await tin.tin_req_prices_share(figi={a.figi},
+                                                           instrument_id={
+                                                               a.uid})
+                get_percent = await tin.tin_req_percent(a.figi, a.uid)
+                try:
+                    print(get_percent[0])
+                    print(get_percent[1])
+                except TypeError:
+                    print(' - ', 'black')
+                self.card_Tools[i] = CardTools(a.uid, a.figi, a.ticker,
+                                               a.class_code, a.isin, a.lot,
+                                               a.currency,
+                                               a.name, a.exchange,
+                                               a.country_of_risk_name,
+                                               a.sector,
+                                               a.buy_available_flag,
+                                               a.sell_available_flag,
+                                               a.api_trade_available_flag,
+                                               a.for_qual_investor_flag,
+                                               a.real_exchange.name)
+                self.card_Tools[i].price = get_price
+                try:
+                    self.card_Tools[i].percent = get_percent[0]
+                    self.card_Tools[i].percent_color = get_percent[1]
+                except TypeError:
+                    self.card_Tools[i].percent = ' - '
+                    self.card_Tools[i].percent_color = 'black'
+                a_id.shares_box.add_widget(self.card_Tools[i])
+                print('экземпляр ' + str(id(self.card_Tools[i])))
+                i += 1
+        keysList = list(self.card_Tools.keys())
+        print((keysList))
+
+    # Корутина по ценам акций
+    async def async_price(self):
+        global go_mainapp
+        print(go_mainapp)
+        # Ждем пока не сработал флаг перехода на основной экран
+        while not go_mainapp:
+            await asyncio.sleep(2)
+            print(go_mainapp)
+        # Пауза для того чтоб не ушел в цикл до получения
+        # первых акций
+        await asyncio.sleep(20)
+        while True:
+            # Пауза между циклами отпрса
+            await asyncio.sleep(20)
+            print('ap')
+            if (list(self.card_Tools.keys())) != []:
+                i = 1
+                b = list(self.card_Tools.keys())[-1]
+                for a in range(1, b):
+                    x = self.card_Tools[i]
+                    a = await tin.tin_req_prices_share(figi={x.figi},
+                                                       instrument_id={
+                                                           x.uid})
+                    с = await tin.tin_req_percent(x.figi, x.uid)
+                    self.card_Tools[i].price = a
+                    try:
+                        self.card_Tools[i].percent = с[0]
+                        self.card_Tools[i].percent_color = с[1]
+                    except TypeError:
+                        self.card_Tools[i].percent = ' - '
+                        self.card_Tools[i].percent_color = 'black'
+                    i += 1
+                    t = time.localtime()
+                    current_time = time.strftime(
+                        "Текущее время - %H:%M:%S", t)
+                    print(current_time)
+                    # Паузы между запросами по акциям
+                    await asyncio.sleep(5)
+            else:
+                print('fin')
+                break
 
     # Авторизация на начальной странице
     def token_auth(self):
@@ -145,6 +325,7 @@ class TinvestApp(MDApp):
     # Функция при запуске приложения
     def on_start(self):
         global token
+        global go_mainapp
         a = self.screen_def()
         print(a)
         if token == '':
@@ -158,6 +339,7 @@ class TinvestApp(MDApp):
 
     #Ввод токена
     def token_input(self, *args):
+        global go_mainapp
         a = self.screen_def()
         with open('token.txt', 'w') as f:
             f.write(args[0])
@@ -260,5 +442,8 @@ class TinvestApp(MDApp):
         canvas = FigureCanvasKivyAgg(fig)
         plot.add_widget(canvas)
 
+#Запуск приложения с асинхронными коруттинами
+loop = asyncio.get_event_loop()
+loop.run_until_complete(TinvestApp().walking_nearby())
+loop.close()
 
-TinvestApp().run()
