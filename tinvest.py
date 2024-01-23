@@ -15,6 +15,7 @@ from kivy.lang import Builder
 from kivy.uix.screenmanager import (ScreenManager, Screen,
                                     FadeTransition, CardTransition)
 from kivymd.uix.card import MDCard
+from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.label import MDLabel
 from kivy.uix.widget import Widget
 from kivy.properties import (StringProperty, NumericProperty,
@@ -40,6 +41,8 @@ print(token)
 tin = Tin_API(token)
 #Флаг перехода в основной апп
 go_mainapp = False
+#переменная для информации по брендам
+brandInfo = ''
 
 # главный экран
 class MainWindow(Screen):
@@ -47,9 +50,8 @@ class MainWindow(Screen):
 
 
 # второй экран приложения
-class Screen_Info_Tools(Screen):
+class ScreenInfoTools(Screen):
     pass
-
 
 # Экран авторизации
 class Authorization_Screen(Screen):
@@ -79,6 +81,7 @@ class CardTools(MDCard):
     price = StringProperty()
     percent = StringProperty()
     percent_color = ColorProperty()
+    price_lot = StringProperty()
     def __init__(self, *arg):
         # Родительский конструктор
         MDCard.__init__(self)
@@ -103,6 +106,7 @@ class CardTools(MDCard):
         self.price = ''
         self.percent = ''
         self.percent_color = 'black'
+        self.percent_lot = ''
 
 # Линия графика
 class GridGraph(Widget):
@@ -159,7 +163,7 @@ class TinvestApp(MDApp):
         sm = ScreenManager(transition=CardTransition())
         sm.add_widget(Authorization_Screen(name='login'))
         sm.add_widget(MainWindow(name='main'))
-        sm.add_widget(Screen_Info_Tools(name='screen_info_tools'))
+        sm.add_widget(ScreenInfoTools(name='screen_info_tools'))
         return sm
 
     #Определение screen и работа с id kv
@@ -230,6 +234,9 @@ class TinvestApp(MDApp):
                     print(get_percent[1])
                 except TypeError:
                     print(' - ', 'black')
+                get_price_lot = await tin.tin_req_prices_lot(figi={a.figi},
+                                                             instrument_id={
+                                                               a.uid})
                 self.card_Tools[i] = CardTools(a.uid, a.figi, a.ticker,
                                                a.class_code, a.isin, a.lot,
                                                a.currency,
@@ -248,6 +255,11 @@ class TinvestApp(MDApp):
                 except TypeError:
                     self.card_Tools[i].percent = ' - '
                     self.card_Tools[i].percent_color = 'black'
+                price_lot1 = get_price_lot * int(a.lot)
+                price_lot2 = round(price_lot1, 2)
+                self.card_Tools[i].price_lot = ('Цена за лот: ' +
+                                                   str(price_lot2) + ' руб')
+                print('Цена лота: ' + self.card_Tools[i].price_lot)
                 a_id.shares_box.add_widget(self.card_Tools[i])
                 print('экземпляр ' + str(id(self.card_Tools[i])))
                 i += 1
@@ -334,6 +346,7 @@ class TinvestApp(MDApp):
             try:
                 self.token_auth()
                 a.go_next.disabled = False
+                self.brand_info()
             except RequestError:
                 a.tinuserinfo.text = 'Токен доступа не найден или не активен'
 
@@ -347,6 +360,7 @@ class TinvestApp(MDApp):
         try:
             self.token_auth()
             a.go_next.disabled = False
+            self.brand_info()
         except RequestError:
             a.tinuserinfo.text = 'Токен доступа не найден или не активен'
             a.go_next.disabled = True
@@ -365,6 +379,32 @@ class TinvestApp(MDApp):
         {},{} Рублей
         """.format(str(tinavail.total_amount_currencies.units),
                    str(tinavail.total_amount_currencies.nano))
+
+    #Страница информации по акции
+    #Запрос информации по брендам
+    def brand_info(self):
+        global brandInfo
+        brandInfo = tin.tin_brandsinfo()
+    #Заполнение оена информации акции
+    def full_descr_share(self, *args):
+        global brandInfo
+        a_id = self.screen_def()
+        #print(a_id.share_name)
+        a_id.share_name.text = ''
+        a_id.share_sector.text = ''
+        a_id.share_description.text = ''
+        a_id.share_name.text = args[0]
+        a_id.share_sector.text = 'Информация: \n{}'.format(
+            brandInfo.brands[0].info
+        )
+        a_id.share_description.text = 'Описание: \n{}\n{}'.format(
+            brandInfo.brands[0].description,
+            brandInfo.brands[0].name
+        )
+        #a_id.share_description.text =
+        #print('ОПИСАНИЕ: ', tin.tin_brandinfo(args[2]))
+        # self.content_Info_Tools[0] = Content_Info_Tools(args[0])
+        # a_id.screen_IT.add_widget(self.content_Info_Tools[0])
 
     # Сетка графика эк. инструмента
     def graf_line(self):

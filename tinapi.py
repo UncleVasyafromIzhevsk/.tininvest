@@ -61,6 +61,19 @@ class Tin_API:
             print(a)
             return a
 
+    # Получаем асинхронно цены за лот
+    async def tin_req_prices_lot(self, **kwarg):
+        async with AsyncClient(self.token,
+                               target=INVEST_GRPC_API_SANDBOX) as client:
+            p = await client.market_data.get_last_prices(**kwarg)
+            p1 = p.last_prices[0]
+            p2 = (str(p1.price.units) + '.' + str(p1.price.nano))
+            p3 = float(p2)
+            a = round(p3, 2)
+            print(a)
+            return a
+
+
     # Получаем асинхронно свечи
     async def tin_req_percent(self, *arg):
         async with AsyncClient(self.token,
@@ -85,3 +98,9 @@ class Tin_API:
                 elif c5 < 0:
                     c8 = (c7, '#FF4500')
                 return c8
+
+    # Название тарифа
+    def tin_brandsinfo(self):
+        with SandboxClient(self.token) as client:
+            a = (client.instruments.get_brands())
+            return a
