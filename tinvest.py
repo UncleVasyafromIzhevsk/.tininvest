@@ -41,8 +41,7 @@ print(token)
 tin = Tin_API(token)
 #Флаг перехода в основной апп
 go_mainapp = False
-#переменная для информации по брендам
-brandInfo = ''
+
 
 # главный экран
 class MainWindow(Screen):
@@ -224,6 +223,8 @@ class TinvestApp(MDApp):
             if (
                     a.api_trade_available_flag == 1
                     and a.for_qual_investor_flag == 0
+                    and a.buy_available_flag == 1
+                    and a.sell_available_flag == 1
                     and a.currency == 'rub'):
                 get_price = await tin.tin_req_prices_share(figi={a.figi},
                                                            instrument_id={
@@ -259,7 +260,7 @@ class TinvestApp(MDApp):
                 price_lot2 = round(price_lot1, 2)
                 self.card_Tools[i].price_lot = ('Цена за лот: ' +
                                                    str(price_lot2) + ' руб')
-                print('Цена лота: ' + self.card_Tools[i].price_lot)
+                print(self.card_Tools[i].price_lot)
                 a_id.shares_box.add_widget(self.card_Tools[i])
                 print('экземпляр ' + str(id(self.card_Tools[i])))
                 i += 1
@@ -286,11 +287,20 @@ class TinvestApp(MDApp):
                 b = list(self.card_Tools.keys())[-1]
                 for a in range(1, b):
                     x = self.card_Tools[i]
+                    print(x.name_sh)
+                    get_price_lot = await tin.tin_req_prices_lot(figi={x.figi},
+                                                                 instrument_id={
+                                                                     x.uid})
                     a = await tin.tin_req_prices_share(figi={x.figi},
                                                        instrument_id={
                                                            x.uid})
                     с = await tin.tin_req_percent(x.figi, x.uid)
                     self.card_Tools[i].price = a
+                    price_lot1 = get_price_lot * int(x.lot)
+                    price_lot2 = round(price_lot1, 2)
+                    self.card_Tools[i].price_lot = ('Цена за лот: ' +
+                                                    str(price_lot2) + ' руб')
+                    print(self.card_Tools[i].price_lot)
                     try:
                         self.card_Tools[i].percent = с[0]
                         self.card_Tools[i].percent_color = с[1]
@@ -346,7 +356,6 @@ class TinvestApp(MDApp):
             try:
                 self.token_auth()
                 a.go_next.disabled = False
-                self.brand_info()
             except RequestError:
                 a.tinuserinfo.text = 'Токен доступа не найден или не активен'
 
@@ -360,7 +369,6 @@ class TinvestApp(MDApp):
         try:
             self.token_auth()
             a.go_next.disabled = False
-            self.brand_info()
         except RequestError:
             a.tinuserinfo.text = 'Токен доступа не найден или не активен'
             a.go_next.disabled = True
@@ -381,47 +389,6 @@ class TinvestApp(MDApp):
                    str(tinavail.total_amount_currencies.nano))
 
     #Страница информации по акции
-    #Запрос информации по брендам
-    def brand_info(self):
-        global brandInfo
-        brandInfo = tin.tin_brandsinfo()
-    #Заполнение оена информации акции
-    def full_descr_share(self, *args):
-        global brandInfo
-        a_id = self.screen_def()
-        #print(a_id.share_name)
-        a_id.share_name.text = ''
-        a_id.share_sector.text = ''
-        a_id.share_description.text = ''
-        a_id.share_name.text = args[0]
-        a_id.share_sector.text = 'Информация: \n{}'.format(
-            brandInfo.brands[0].info
-        )
-        a_id.share_description.text = 'Описание: \n{}\n{}'.format(
-            brandInfo.brands[0].description,
-            brandInfo.brands[0].name
-        )
-        #a_id.share_description.text =
-        #print('ОПИСАНИЕ: ', tin.tin_brandinfo(args[2]))
-        # self.content_Info_Tools[0] = Content_Info_Tools(args[0])
-        # a_id.screen_IT.add_widget(self.content_Info_Tools[0])
-
-    # Сетка графика эк. инструмента
-    def graf_line(self):
-        name_scr = re.split("'|'", (str(self.root.children)))[1]
-        plot = self.root.get_screen(name_scr).ids.plot
-        a = (plot.size[0] / 9)
-        b = (plot.size[1] / 9)
-        c = 1
-        while c < 9:
-            c += 1
-            plot.add_widget(GridGraph(a, plot.pos[1], a, plot.size[1])
-                            )
-            plot.add_widget(GridGraph(plot.pos[0], b, plot.size[0], b)
-                            )
-            a = ((plot.size[0] / 9) * c)
-            b = ((plot.size[1] / 9) * c)
-
     # Очистка экрана
     # графика экрана инструмента
     def clear_graf(self):
@@ -443,19 +410,25 @@ class TinvestApp(MDApp):
         plot.add_widget(canvas)
 
     # График японских свеч
-    def japan_candle(self):
-        name_scr = re.split("'|'", (str(self.root.children)))[1]
-        plot = self.root.get_screen(name_scr).ids.plot
-        stock_prices = pd.DataFrame(
-            {'date': np.array([datetime.datetime(
-                2021, 11, i + 1)
-                for i in range(14)]),
-                'open': [36, 56, 45, 29, 65, 66, 67, 36, 56, 45, 29, 65, 66, 67],
-                'close': [29, 72, 11, 4, 23, 68, 45, 29, 72, 11, 4, 23, 68, 45],
-                'high': [42, 73, 61, 62, 73, 56, 55, 42, 73, 61, 62, 73, 56, 55],
-                'low': [22, 11, 10, 2, 13, 24, 25, 22, 11, 10, 2, 13, 24, 25]
-            }
-        )
+    def japan_candle(self, *args):
+        a_id = self.screen_def()
+        a_id.jap_cand_plot.clear_widgets(
+            children=None)
+        a_id.share_name.text = args[0]
+        #print(tin.tin_plot_candle(args[2], args[1]))
+        lst = (tin.tin_plot_candle(args[2], args[1]))
+        candTime = lst[0]
+        openPrice = lst[1]
+        maxPrice = lst[2]
+        minPrice = lst[3]
+        closPrice = lst[4]
+        stock_prices = pd.DataFrame({'date': candTime,
+                                     'open': openPrice,
+                                     'close': closPrice,
+                                     'high': maxPrice,
+                                     'low': minPrice
+                                     }
+                                    )
 
         ohlc = stock_prices.loc[:, ['date', 'open', 'high', 'low', 'close']]
         ohlc['date'] = pd.to_datetime(ohlc['date'])
@@ -465,22 +438,22 @@ class TinvestApp(MDApp):
         fig, ax = plt.subplots()
         fig.patch.set_alpha(0)
         # Сетка графика
-        plt.grid(color='b', linestyle='-', linewidth=0.3)
+        plt.grid(color='b', linestyle='-', linewidth=0.08)
 
-        candlestick_ohlc(ax, ohlc.values, width=0.4, colorup='green',
+        candlestick_ohlc(ax, ohlc.values, width=0.008, colorup='green',
                          colordown='red', alpha=1)
 
-        ax.set_xlabel('Дата')
-        ax.set_ylabel('Цена')
+        ax.set_xlabel('Время')
+        ax.set_ylabel('Цена, рубль')
         fig.suptitle('Динамика')
 
-        date_format = mpl_dates.DateFormatter('%d-%m-%Y')
+        date_format = mpl_dates.DateFormatter('%d %H:%M')
         ax.xaxis.set_major_formatter(date_format)
         ax.patch.set_alpha(0)
         fig.autofmt_xdate()
 
         canvas = FigureCanvasKivyAgg(fig)
-        plot.add_widget(canvas)
+        a_id.jap_cand_plot.add_widget(canvas)
 
 #Запуск приложения с асинхронными коруттинами
 loop = asyncio.get_event_loop()

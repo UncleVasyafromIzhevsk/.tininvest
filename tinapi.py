@@ -10,6 +10,8 @@ from tinkoff.invest.grpc.instruments_pb2_grpc import InstrumentsService
 from tinkoff.invest.grpc.sandbox_pb2_grpc import SandboxService
 from tinkoff.invest.grpc.marketdata_pb2_grpc import MarketDataService
 from tinkoff.invest.grpc.operations_pb2_grpc import OperationsService
+
+from tinkoff.invest import InvestError
 #Асинхронные пакеты
 import asyncio
 import os
@@ -52,7 +54,12 @@ class Tin_API:
     async def tin_req_prices_share(self, **kwarg):
         async with AsyncClient(self.token,
                                target=INVEST_GRPC_API_SANDBOX) as client:
-            p = await client.market_data.get_last_prices(**kwarg)
+            try:
+                p = await client.market_data.get_last_prices(**kwarg)
+            except InvestError:
+                print('Ошибка в запросе цены продажи')
+                err = ('Ошибка')
+                return err
             p1 = p.last_prices[0]
             p2 = (str(p1.price.units) + '.' + str(p1.price.nano))
             p3 = float(p2)
@@ -65,25 +72,35 @@ class Tin_API:
     async def tin_req_prices_lot(self, **kwarg):
         async with AsyncClient(self.token,
                                target=INVEST_GRPC_API_SANDBOX) as client:
-            p = await client.market_data.get_last_prices(**kwarg)
-            p1 = p.last_prices[0]
-            p2 = (str(p1.price.units) + '.' + str(p1.price.nano))
-            p3 = float(p2)
-            a = round(p3, 2)
-            print(a)
-            return a
+            try:
+                p = await client.market_data.get_last_prices(**kwarg)
+                p1 = p.last_prices[0]
+                p2 = (str(p1.price.units) + '.' + str(p1.price.nano))
+                p3 = float(p2)
+                a = round(p3, 2)
+                print(a)
+                return a
+            except InvestError:
+                print('Ошибка в запросе цены за лот')
+                err = 0.0
+                return err
 
 
     # Получаем асинхронно свечи
     async def tin_req_percent(self, *arg):
         async with AsyncClient(self.token,
                                target=INVEST_GRPC_API_SANDBOX) as client:
-            a = await (client.market_data.get_candles(figi=arg[0],
-                                                      from_=now() - timedelta(
-                                                          hours=1),
-                                                      to=now(),
-                                                      interval=CandleInterval.CANDLE_INTERVAL_5_MIN,
-                                                      instrument_id=arg[1]))
+            try:
+                a = await (client.market_data.get_candles(figi=arg[0],
+                                                          from_=now() - timedelta(
+                                                              hours=1),
+                                                          to=now(),
+                                                          interval=CandleInterval.CANDLE_INTERVAL_5_MIN,
+                                                          instrument_id=arg[1]))
+            except InvestError:
+                print('Ошибка в запросе процента')
+                err = (' - ', 'black')
+                return err
             for b in a.candles[:-1]:
                 c1 = (str(b.open.units) + '.' + str(b.open.nano))
                 c2 = (str(b.close.units) + '.' + str(b.close.nano))
@@ -104,3 +121,30 @@ class Tin_API:
         with SandboxClient(self.token) as client:
             a = (client.instruments.get_brands())
             return a
+
+    #Данные для графика японских свечей
+    def tin_plot_candle(self, *args):
+        with Client(self.token, target=INVEST_GRPC_API_SANDBOX) as client:
+            a = (client.market_data.get_candles(figi=args[0],
+                                                from_=now() - timedelta(hours=8),
+                                                to=now(),
+                                                interval=CandleInterval.CANDLE_INTERVAL_15_MIN,
+                                                instrument_id=args[1]))
+            i = 0
+            candTime = []
+            openPrice = []
+            maxPrice = []
+            minPrice = []
+            closPrice = []
+            for b in a.candles[:-1]:
+                if b.is_complete:
+                    openPrice.append(round((float(str(
+                        b.open.units) + '.' + str(b.open.nano))), 2))
+                    maxPrice.append(round((float(str(
+                        b.high.units) + '.' + str(b.high.units))), 2))
+                    minPrice.append(round((float(str(
+                        b.low.units) + '.' + str(b.low.nano))), 2))
+                    closPrice.append(round((float(str(
+                        b.close.units) + '.' + str(b.close.nano))), 2))
+                    candTime.append(b.time)
+            return (candTime, openPrice, maxPrice, minPrice, closPrice)
