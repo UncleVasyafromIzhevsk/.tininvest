@@ -8,6 +8,7 @@ from mpl_finance import candlestick_ohlc
 import pandas as pd
 import matplotlib.dates as mpl_dates
 import numpy as np
+from sklearn import preprocessing
 from kivy.garden.matplotlib import FigureCanvasKivyAgg
 
 from kivymd.app import MDApp
@@ -41,6 +42,20 @@ print(token)
 tin = Tin_API(token)
 #Флаг перехода в основной апп
 go_mainapp = False
+#UID, FIGI and Name для временного хранения
+gUID = ''
+gFIGI = ''
+gNAME = ''
+#Флаги для заполнения экрана избранного
+flag1 = False
+flag2 = False
+flag3 = False
+flag4 = False
+flag5 = False
+closPrice1 = [0,0,0,0]
+closPrice1 = [0,0,0,0]
+closPrice1 = [0,0,0,0]
+closPrice1 = [0,0,0,0]
 
 
 # главный экран
@@ -397,20 +412,116 @@ class TinvestApp(MDApp):
             children=None)
 
     # Линейный график
+    # Переменки для заполнения экрана избранного
+    flag1 = False
+    flag2 = False
+    flag3 = False
+    flag4 = False
+    flag5 = False
+    closPrice1 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    closPrice2 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    closPrice3 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    closPrice4 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    closPrice5 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    #Сам график
     def line_graph(self):
-        name_scr = re.split("'|'", (str(self.root.children)))[1]
-        plot = self.root.get_screen(name_scr).ids.plot
+        global gUID
+        global gFIGI
+        global gNAME
+        a_id = self.screen_def()
+        a_id.plot_line.clear_widgets(
+            children=None)
+        lst = (tin.tin_plot_line(gFIGI, gUID))
+        candTime = lst[0]
+        closPrice = lst[4]
+        if not self.flag1:
+            self.flag1 = True
+            if self.flag1:
+                self.closPrice1 = closPrice
+                a_id.promoShare1.text = gNAME
+        elif not self.flag2:
+            self.flag2 = True
+            if self.flag2:
+                self.closPrice2 = closPrice
+                a_id.promoShare2.text = gNAME
+        elif not self.flag3:
+            self.flag3 = True
+            if self.flag3:
+                self.closPrice3 = closPrice
+                a_id.promoShare3.text = gNAME
+        elif not self.flag4:
+            self.flag4 = True
+            if self.flag4:
+                self.closPrice4 = closPrice
+                a_id.promoShare4.text = gNAME
+        elif not self.flag5:
+            self.flag5 = True
+            if self.flag5:
+                self.closPrice5 = closPrice
+                a_id.promoShare5.text = gNAME
+        else: print('Места в избранном закончены')
         fig, ax = plt.subplots()
         # Прозрачность фигуры
         fig.patch.set_alpha(0)
-        ax.plot([1, 2, 3, 4])
+        #Сам график
+        share_bign = np.array([self.closPrice1, self.closPrice2,
+                               self.closPrice3, self.closPrice4,
+                               self.closPrice5
+                               ]
+                              )
+        share_plot = preprocessing.normalize(share_bign)
+        #print(share_plot)
+        ax.plot(candTime, share_plot[0], color='r', marker='o')
+        ax.plot(candTime, share_plot[1], color='b', marker='o')
+        ax.plot(candTime, share_plot[2], color='y', marker='o')
+        ax.plot(candTime, share_plot[3], color='g', marker='o')
+        ax.plot(candTime, share_plot[4], color='tab:brown', marker='o')
         # Прозрачность фона графика
         ax.patch.set_alpha(0)
+        #Удаление значений оси y
+        ax.get_yaxis().set_visible(False)
+        # аннотации:
+        #ax.set_xticklabels(share_bign)
+
+        # Сетка графика
+        #plt.grid(color='k', linestyle='-', linewidth=0.1)
+        #Сборка графика
         canvas = FigureCanvasKivyAgg(fig)
-        plot.add_widget(canvas)
+        #добавление графика в виджет
+        a_id.plot_line.add_widget(canvas)
+    #Удаление акции из избранного
+    def removing_share_favorites(self, *args):
+        a_id = self.screen_def()
+        if args[0] == 'favorites1':
+            self.flag1 = False
+            self.closPrice1 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+            a_id.promoShare1.text = 'Удален из избранного'
+        if args[0] == 'favorites2':
+            self.flag2 = False
+            self.closPrice2 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+            a_id.promoShare2.text = 'Удален из избранного'
+        if args[0] == 'favorites3':
+            self.flag3 = False
+            self.closPrice3 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+            a_id.promoShare3.text = 'Удален из избранного'
+        if args[0] == 'favorites4':
+            self.flag4 = False
+            self.closPrice4 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+            a_id.promoShare4.text = 'Удален из избранного'
+        if args[0] == 'favorites5':
+            self.flag5 = False
+            self.closPrice5 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+            a_id.promoShare5.text = 'Удален из избранного'
+
 
     # График японских свеч
     def japan_candle(self, *args):
+        global gUID
+        global gFIGI
+        global gNAME
+        gUID = args[1]
+        gFIGI = args[2]
+        gNAME = args[0]
         a_id = self.screen_def()
         a_id.jap_cand_plot.clear_widgets(
             children=None)
@@ -438,8 +549,8 @@ class TinvestApp(MDApp):
         fig, ax = plt.subplots()
         fig.patch.set_alpha(0)
         # Сетка графика
-        plt.grid(color='b', linestyle='-', linewidth=0.08)
-
+        plt.grid(color='k', linestyle='-', linewidth=0.1)
+        #Сам график свечей
         candlestick_ohlc(ax, ohlc.values, width=0.008, colorup='green',
                          colordown='red', alpha=1)
 

@@ -12,6 +12,7 @@ from tinkoff.invest.grpc.marketdata_pb2_grpc import MarketDataService
 from tinkoff.invest.grpc.operations_pb2_grpc import OperationsService
 
 from tinkoff.invest import InvestError
+from tinkoff.invest import RequestError
 #Асинхронные пакеты
 import asyncio
 import os
@@ -125,26 +126,61 @@ class Tin_API:
     #Данные для графика японских свечей
     def tin_plot_candle(self, *args):
         with Client(self.token, target=INVEST_GRPC_API_SANDBOX) as client:
-            a = (client.market_data.get_candles(figi=args[0],
-                                                from_=now() - timedelta(hours=8),
-                                                to=now(),
-                                                interval=CandleInterval.CANDLE_INTERVAL_15_MIN,
-                                                instrument_id=args[1]))
-            i = 0
-            candTime = []
-            openPrice = []
-            maxPrice = []
-            minPrice = []
-            closPrice = []
-            for b in a.candles[:-1]:
-                if b.is_complete:
-                    openPrice.append(round((float(str(
-                        b.open.units) + '.' + str(b.open.nano))), 2))
-                    maxPrice.append(round((float(str(
-                        b.high.units) + '.' + str(b.high.units))), 2))
-                    minPrice.append(round((float(str(
-                        b.low.units) + '.' + str(b.low.nano))), 2))
-                    closPrice.append(round((float(str(
-                        b.close.units) + '.' + str(b.close.nano))), 2))
-                    candTime.append(b.time)
-            return (candTime, openPrice, maxPrice, minPrice, closPrice)
+            try:
+                a = (client.market_data.get_candles(figi=args[0],
+                                                    from_=now() - timedelta(hours=8),
+                                                    to=now(),
+                                                    interval=CandleInterval.CANDLE_INTERVAL_15_MIN,
+                                                    instrument_id=args[1]))
+                candTime = []
+                openPrice = []
+                maxPrice = []
+                minPrice = []
+                closPrice = []
+                for b in a.candles[:-1]:
+                    if b.is_complete:
+                        openPrice.append(round((float(str(
+                            b.open.units) + '.' + str(b.open.nano))), 2))
+                        maxPrice.append(round((float(str(
+                            b.high.units) + '.' + str(b.high.units))), 2))
+                        minPrice.append(round((float(str(
+                            b.low.units) + '.' + str(b.low.nano))), 2))
+                        closPrice.append(round((float(str(
+                            b.close.units) + '.' + str(b.close.nano))), 2))
+                        candTime.append(b.time)
+                return (candTime, openPrice, maxPrice, minPrice, closPrice)
+            except RequestError:
+                print('Ошибка при запросе свечей')
+                return ([0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0])
+
+    # Данные для линейного графика избранных акций
+    def tin_plot_line(self, *args):
+        with Client(self.token, target=INVEST_GRPC_API_SANDBOX) as client:
+            try:
+                a = (client.market_data.get_candles(figi=args[0],
+                                                    from_=now() - timedelta(
+                                                        days=30),
+                                                    to=now(),
+                                                    interval=CandleInterval.CANDLE_INTERVAL_DAY,
+                                                    instrument_id=args[1]))
+                candTime = []
+                openPrice = []
+                maxPrice = []
+                minPrice = []
+                closPrice = []
+                for b in a.candles[:-1]:
+                    if b.is_complete:
+                        openPrice.append(round((float(str(
+                            b.open.units) + '.' + str(b.open.nano))), 2))
+                        maxPrice.append(round((float(str(
+                            b.high.units) + '.' + str(b.high.units))), 2))
+                        minPrice.append(round((float(str(
+                            b.low.units) + '.' + str(b.low.nano))), 2))
+                        closPrice.append(round((float(str(
+                            b.close.units) + '.' + str(b.close.nano))), 2))
+                        candTime.append(b.time)
+                return (candTime, openPrice, maxPrice, minPrice, closPrice)
+            except RequestError:
+                print('Ошибка при запросе линейного графика')
+                return ([0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0],
+                        [0, 0, 0, 0])

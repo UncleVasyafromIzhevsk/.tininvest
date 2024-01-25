@@ -1,55 +1,3 @@
-# Сетка графика
-<GridGraph>
-    name: 'graf'
-    id: graf
-    x1: root.x1
-    x2: root.x2
-    y1: root.y1
-    y2: root.y2
-    canvas:
-        Color:
-            rgba: 37/255, 38/255, 33/255, 0.3
-        Line:
-            width: 0.5
-            points: [graf.x1, graf.y1, graf.x2, graf.y2]
-
-# Свеча графика
-<CandleGraph>
-    name: 'candle_graph'
-    id: candle_graph
-    x1: root.x1
-    x2: root.x2
-    x3: root.x3
-    x4: root.x4
-    y1: root.y1
-    y2: root.y2
-    y3: root.y3
-    y4: root.y4
-    canvas:
-        Color:
-            rgba: 37/255, 38/255, 33/255, 1
-        Line:
-            width: 2
-            points: [candle_graph.x1, candle_graph.y1, candle_graph.x2, candle_graph.y2]
-        Color:
-            rgba: 37/255, 38/255, 33/255, 1
-        Rectangle:
-            pos: [candle_graph.x3, candle_graph.y3]
-            size: [candle_graph.x4, candle_graph.y4]
-
-# Карточки названий акций на экране избранного
-<MyMDCard@MDCard>
-    size_hint: 1, .2
-    MDLabel:
-        text: 'Здесь будет название акции'
-        size_hint: 0.8, 1
-        halign: 'center'
-    MDIconButton:
-        icon: "delete-circle-outline"
-        size_hint: 0.2, 1
-        halign: 'center'
-        on_press: app.clear_graf(), app.line_graph()
-
 # Карточка инструмента
 <CardTools>
     name: 'cartaInstrument'
@@ -221,22 +169,74 @@
                         orientation: 'vertical'
                         padding: [2, 2, 2, 2]
                         spacing: 2
-                        MyMDCard:
+                        MDCard:
                             md_bg_color: '#f30f22'
-                        MyMDCard:
+                            MDLabel:
+                                id: promoShare1
+                                text: 'Здесь будет название акции'
+                                size_hint: 0.8, 1
+                                halign: 'center'
+                            MDIconButton:
+                                icon: "delete-circle-outline"
+                                size_hint: 0.2, 1
+                                halign: 'center'
+                                on_press: app.removing_share_favorites('favorites1')
+                        MDCard:
                             md_bg_color: '#0544f3'
-                        MyMDCard:
+                            MDLabel:
+                                id: promoShare2
+                                text: 'Здесь будет название акции'
+                                size_hint: 0.8, 1
+                                halign: 'center'
+                            MDIconButton:
+                                icon: "delete-circle-outline"
+                                size_hint: 0.2, 1
+                                halign: 'center'
+                                on_press: app.removing_share_favorites('favorites2')
+                        MDCard:
                             md_bg_color: '#e9f322'
-                        MyMDCard:
+                            MDLabel:
+                                id: promoShare3
+                                text: 'Здесь будет название акции'
+                                size_hint: 0.8, 1
+                                halign: 'center'
+                            MDIconButton:
+                                icon: "delete-circle-outline"
+                                size_hint: 0.2, 1
+                                halign: 'center'
+                                on_press: app.removing_share_favorites('favorites3')
+                        MDCard:
                             md_bg_color: '#24f33d'
-                        MyMDCard:
+                            MDLabel:
+                                id: promoShare4
+                                text: 'Здесь будет название акции'
+                                size_hint: 0.8, 1
+                                halign: 'center'
+                            MDIconButton:
+                                icon: "delete-circle-outline"
+                                size_hint: 0.2, 1
+                                halign: 'center'
+                                on_press: app.removing_share_favorites('favorites4')
+                        MDCard:
                             md_bg_color: '#a38112'
+                            MDLabel:
+                                id: promoShare5
+                                text: 'Здесь будет название акции'
+                                size_hint: 0.8, 1
+                                halign: 'center'
+                            MDIconButton:
+                                icon: "delete-circle-outline"
+                                size_hint: 0.2, 1
+                                halign: 'center'
+                                on_press: app.removing_share_favorites('favorites5')
+
 
                 MDCard:
                     name: 'graf_fav'
-                    #id: plot
+                    id: plot_line
                     size_hint: 1, .8
                     md_bg_color: '#2F4F4F'
+
 
 
 
@@ -293,6 +293,9 @@
                         icon: "plus-box"
                         halign: "center"
                         on_press:
+                            app.root.current = 'main'
+                            root.manager.transition.direction = 'right'
+                            app.line_graph()
         MDCard:
             name: 'graf_sh'
             id: jap_cand_plot
