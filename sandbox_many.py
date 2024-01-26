@@ -139,7 +139,7 @@ def my_shares():
 #receiving_shares()
 #user_info()
 #list_transactions()
-getting_positions()
+#getting_positions()
 #available_balance_withdrawal()
 #post_sandbox_order_sale()
 #my_shares()

@@ -614,6 +614,8 @@ class TinvestApp(MDApp):
         a_id.jap_cand_plot.add_widget(canvas)
 
 #Запуск приложения с асинхронными коруттинами
+
+#Запуск приложения с асинхронными коруттинами
 loop = asyncio.get_event_loop()
 loop.run_until_complete(TinvestApp().walking_nearby())
 loop.close()
