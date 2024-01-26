@@ -2,7 +2,7 @@
 from tinkoff.invest.sandbox.client import SandboxClient
 from tinkoff.invest.constants import INVEST_GRPC_API_SANDBOX
 # Для работы с методами клиента
-from tinkoff.invest import Client
+from tinkoff.invest import (Client, InstrumentIdType)
 from tinkoff.invest import CandleInterval
 # Для подключения сервиса из папки grpc
 from tinkoff.invest.grpc.users_pb2_grpc import UsersService
@@ -184,3 +184,44 @@ class Tin_API:
                 print('Ошибка при запросе линейного графика')
                 return ([0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0],
                         [0, 0, 0, 0])
+
+    # Метод получения списка позиций по счёту
+    def tin_getting_positions(self, *args):
+        with SandboxClient(self.token) as client:
+            a = (client.operations.get_positions(
+                account_id=args[0]))
+            # print(a.securities)  # массив акций
+            # print(a.securities[1].figi)  # figi
+            # print(a.securities[1].instrument_uid)  # instrument_uid
+            # print(a.securities[1].balance)  # balance (сколько лотов)
+            # print(len(a.securities))  # количество позиций
+            return (len(a.securities), a.securities)
+
+    # Получаем список моих акций
+    def tin_my_shares(self, *args):
+        with SandboxClient(self.token) as client:
+            a = client.instruments.share_by(
+                id_type=InstrumentIdType.INSTRUMENT_ID_TYPE_UID,
+                id=args[0]
+            )
+            # print(a.instrument.name)
+            # print(a.instrument.lot)
+            # print(a.instrument.nominal)
+            return a
+
+    # Получаем цену акций
+    def tin_req_prices_shar(self, **kwarg):
+        with SandboxClient(self.token) as client:
+            try:
+                p = client.market_data.get_last_prices(**kwarg)
+            except InvestError:
+                print('Ошибка в запросе цены продажи')
+                err = ('Ошибка')
+                return err
+            p1 = p.last_prices[0]
+            p2 = (str(p1.price.units) + '.' + str(p1.price.nano))
+            p3 = float(p2)
+            p4 = round(p3, 2)
+            a = p4
+            print(a)
+            return a

@@ -167,6 +167,7 @@ class CandleGraph(Widget):
 class TinvestApp(MDApp):
     #Объявление объулта карты инструмента
     card_Tools = {}
+    card_Tools_Portf = {}
     # Определение асинх задач
     # Задача для получения, записи и отображения всех акций
     get_all_shares_task = None
@@ -351,13 +352,13 @@ class TinvestApp(MDApp):
         Общая стоимость акций в портфеле: {},{} Рублей 
         """.format(tininfo.tariff, tinschet.accounts[0].id,
                    str(tinavail.total_amount_portfolio.units),
-                   str(tinavail.total_amount_portfolio.nano),
+                   (str(tinavail.total_amount_portfolio.nano).split()[0][0:2]),
                    str(tinavail.expected_yield.units),
                    str(tinavail.expected_yield.nano),
                    str(tinavail.total_amount_currencies.units),
-                   str(tinavail.total_amount_currencies.nano),
+                   (str(tinavail.total_amount_currencies.nano).split()[0][0:2]),
                    str(tinavail.total_amount_shares.units),
-                   str(tinavail.total_amount_shares.nano))
+                   (str(tinavail.total_amount_shares.nano)).split()[0][0:2])
 
     # Функция при запуске приложения
     def on_start(self):
@@ -393,15 +394,61 @@ class TinvestApp(MDApp):
     def portfolio_data(self):
         tinschet = tin.tin_schet()
         tinavail = tin.tin_portf(tinschet.accounts[0].id)
-        a = self.screen_def()
-        a.tot_portf_val.text = """
+        a_id = self.screen_def()
+        a_id.tot_portf_val.text = """
         {},{} Рублей
         """.format(str(tinavail.total_amount_portfolio.units),
-                   str(tinavail.total_amount_portfolio.nano))
-        a.tot_val_curr_portf.text = """
+                   (str(tinavail.total_amount_portfolio.nano).split()[0][0:2]))
+        a_id.tot_val_curr_portf.text = """
         {},{} Рублей
         """.format(str(tinavail.total_amount_currencies.units),
-                   str(tinavail.total_amount_currencies.nano))
+                   (str(tinavail.total_amount_currencies.nano).split()[0][0:2]))
+        myShare = tin.tin_getting_positions(tinschet.accounts[0].id)
+        print(myShare[0])
+        print(myShare[1][1].instrument_uid)
+        i = 0
+        if myShare[0] != 0:
+            print(myShare[1][::-1])
+            for c in myShare[1][::-1]:
+                print(c)
+                b = tin.tin_my_shares(c.instrument_uid)
+                print(c)
+                print(b)
+                print(myShare[1][i])
+                a = b.instrument
+                print(a)
+                d = myShare[1][i].balance
+                print(d)
+
+                print(a.name)
+
+                self.card_Tools_Portf[i] = CardTools(a.uid, a.figi,
+                                                     a.ticker, a.class_code,
+                                                     a.isin, a.lot, a.currency,
+                                                     a.name, a.exchange,
+                                                     a.country_of_risk_name,
+                                                     a.sector,
+                                                     a.buy_available_flag,
+                                                     a.sell_available_flag,
+                                                     a.api_trade_available_flag,
+                                                     a.for_qual_investor_flag,
+                                                     a.real_exchange.name
+                                                     )
+                get_price = tin.tin_req_prices_shar(figi={a.figi},
+                                                    instrument_id={a.uid}
+                                                    )
+                self.card_Tools_Portf[i].price = (str(get_price) + ' Рублей')
+                price_lot1 = get_price * int(d)
+                price_lot2 = round(price_lot1, 2)
+                self.card_Tools_Portf[i].price_lot = ('Всего лотов ' + str(d) +
+                                                ' На сумму: ' +
+                                                str(price_lot2) + ' руб')
+                #print(self.card_Tools[i].price_lot)
+                a_id.inNali_box.add_widget(self.card_Tools_Portf[i])
+                print('экземпляр ' + str(id(self.card_Tools_Portf[i])))
+                i += 1
+
+
 
     #Страница информации по акции
     # Очистка экрана
