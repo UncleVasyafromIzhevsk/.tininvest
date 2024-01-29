@@ -10,12 +10,15 @@ import matplotlib.dates as mpl_dates
 import numpy as np
 from sklearn import preprocessing
 from kivy.garden.matplotlib import FigureCanvasKivyAgg
+import uuid
 
 from kivymd.app import MDApp
 from kivy.lang import Builder
 from kivy.uix.screenmanager import (ScreenManager, Screen,
                                     FadeTransition, CardTransition)
 from kivymd.uix.card import MDCard
+from kivymd.uix.dialog import MDDialog
+from kivymd.uix.button import MDFlatButton
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.label import MDLabel
 from kivy.uix.widget import Widget
@@ -122,46 +125,6 @@ class CardTools(MDCard):
         self.percent_color = 'black'
         self.percent_lot = ''
 
-# Линия графика
-class GridGraph(Widget):
-    name = ObjectProperty(None)
-    x1 = NumericProperty()
-    x2 = NumericProperty()
-    y1 = NumericProperty()
-    y2 = NumericProperty()
-    def __init__(self, *arg):
-        # Родительский конструктор
-        Widget.__init__(self)
-        # Свой конструктор
-        self.x1 = arg[0]
-        self.y1 = arg[1]
-        self.x2 = arg[2]
-        self.y2 = arg[3]
-
-
-# Свеча графика
-class CandleGraph(Widget):
-    name = ObjectProperty(None)
-    x1 = NumericProperty()
-    x2 = NumericProperty()
-    x3 = NumericProperty()
-    x4 = NumericProperty()
-    y1 = NumericProperty()
-    y2 = NumericProperty()
-    y3 = NumericProperty()
-    y4 = NumericProperty()
-    def __init__(self, *arg):
-        # Родительский конструктор
-        Widget.__init__(self)
-        # Свой конструктор
-        self.x1 = arg[0]
-        self.y1 = arg[1]
-        self.x2 = arg[2]
-        self.y2 = arg[3]
-        self.x3 = arg[4]
-        self.y3 = arg[5]
-        self.x4 = arg[6]
-        self.y4 = arg[7]
 
 
 class TinvestApp(MDApp):
@@ -448,6 +411,57 @@ class TinvestApp(MDApp):
                 print('экземпляр ' + str(id(self.card_Tools_Portf[i])))
                 i += 1
 
+    # Информация для покупки на странице акции
+    # Переменная для хранения количества лотов к покупке
+    numberLotsPurchase = 0
+    def dialogue_share_promotion(self):
+        global gUID
+        global gFIGI
+        global gNAME
+        a_id = self.screen_def()
+        get_price = tin.tin_req_prices_shar(figi={gFIGI},
+                                            instrument_id={gUID}
+                                            )
+        lots = tin.tin_my_shares(gUID).instrument.lot
+        pricePerLot = get_price * lots
+        tinschet = tin.tin_schet()
+        tinavailOb = tin.tin_portf(tinschet.accounts[0].id)
+        tinavailStr = (str(tinavailOb.total_amount_currencies.units) + '.' +
+                       (str(tinavailOb.total_amount_currencies.nano).split()[0][0:2]))
+        tinavail = float(tinavailStr)
+        availableForPurchase = int(tinavail // pricePerLot)
+        a_id.add_lot.max = availableForPurchase
+        self.numberLotsPurchase = a_id.add_lot.value
+        a_id.share_description.text = """
+Цена: {} рублей\nЛот: {} штук\nЦена за лот: {} рублей
+Средств для покупки: {} рублей\nДоступно к покупке: {} лотов
+            """.format(get_price, lots, pricePerLot, tinavailStr,
+                       availableForPurchase)
+    # Покупка акций
+    # Получение рондомного ордера
+    def order_id_ready(self):
+        order_id = uuid.uuid4().hex
+        order_id1 = order_id.split()[0][0:7]
+        order_id2 = order_id.split()[0][7:11]
+        order_id3 = order_id.split()[0][11:15]
+        order_id4 = order_id.split()[0][15:19]
+        order_id5 = order_id.split()[0][19:-1]
+        order = (order_id1 + '-' + order_id2 + '-' + order_id3 + '-' +
+                          order_id4 + '-' + order_id5)
+        print(order)
+        return order
+    # Покупка
+    def buying_shares(self, *args):
+        global gUID
+        global gFIGI
+        global gNAME
+        lots = args[0]
+        order = self.order_id_ready()
+        acc_id = tin.tin_schet().accounts[0].id
+        #print(lots,'\n',acc_id,'\n', order,'\n', gFIGI)
+        a = tin.tin_buying_shares(lots, acc_id, order, gFIGI)
+        print(a)
+
 
 
     #Страница информации по акции
@@ -465,11 +479,11 @@ class TinvestApp(MDApp):
     flag3 = False
     flag4 = False
     flag5 = False
-    closPrice1 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-    closPrice2 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-    closPrice3 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-    closPrice4 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-    closPrice5 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    closPrice1 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    closPrice2 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    closPrice3 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    closPrice4 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    closPrice5 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
     #Сам график
     def line_graph(self):
         global gUID
@@ -485,6 +499,7 @@ class TinvestApp(MDApp):
             self.flag1 = True
             if self.flag1:
                 self.closPrice1 = closPrice
+                print(self.closPrice1)
                 a_id.promoShare1.text = gNAME
         elif not self.flag2:
             self.flag2 = True
@@ -541,23 +556,23 @@ class TinvestApp(MDApp):
         a_id = self.screen_def()
         if args[0] == 'favorites1':
             self.flag1 = False
-            self.closPrice1 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+            self.closPrice1 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
             a_id.promoShare1.text = 'Удален из избранного'
         if args[0] == 'favorites2':
             self.flag2 = False
-            self.closPrice2 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+            self.closPrice2 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
             a_id.promoShare2.text = 'Удален из избранного'
         if args[0] == 'favorites3':
             self.flag3 = False
-            self.closPrice3 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+            self.closPrice3 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
             a_id.promoShare3.text = 'Удален из избранного'
         if args[0] == 'favorites4':
             self.flag4 = False
-            self.closPrice4 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+            self.closPrice4 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
             a_id.promoShare4.text = 'Удален из избранного'
         if args[0] == 'favorites5':
             self.flag5 = False
-            self.closPrice5 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+            self.closPrice5 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
             a_id.promoShare5.text = 'Удален из избранного'
 
 

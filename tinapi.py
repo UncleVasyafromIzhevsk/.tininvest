@@ -2,7 +2,8 @@
 from tinkoff.invest.sandbox.client import SandboxClient
 from tinkoff.invest.constants import INVEST_GRPC_API_SANDBOX
 # Для работы с методами клиента
-from tinkoff.invest import (Client, InstrumentIdType)
+from tinkoff.invest import (Client, InstrumentIdType, OrderDirection,
+                            OrderType,)
 from tinkoff.invest import CandleInterval
 # Для подключения сервиса из папки grpc
 from tinkoff.invest.grpc.users_pb2_grpc import UsersService
@@ -226,4 +227,14 @@ class Tin_API:
             print(a)
             return a
 
-    # Запуск приложения с асинхронными коруттинами
+    # Покупка и продажа акций
+    def tin_buying_shares(self, *args):
+        with SandboxClient(self.token) as client:
+            a = client.orders.post_order(quantity=args[0],
+                                         direction=OrderDirection.ORDER_DIRECTION_BUY,
+                                         account_id=args[1],
+                                         order_type=OrderType.ORDER_TYPE_MARKET,
+                                         order_id=args[2],
+                                         instrument_id=args[3],
+                                         )
+            return a

@@ -140,6 +140,6 @@ def my_shares():
 #user_info()
 #list_transactions()
 #getting_positions()
-#available_balance_withdrawal()
+available_balance_withdrawal()
 #post_sandbox_order_sale()
-#my_shares()
+my_shares()
